@@ -23,7 +23,7 @@ class Player:
         board_values = [(i // self.board.n, i % self.board.n) for i in range(0, np.square(self.board.n))]
         valid_moves = [i for i in board_values if not self.board.is_occupied(i)]
 
-        chosen = random.choice(board_values)
+        chosen = random.choice(valid_moves)
         return ("PLACE", *chosen)
 
     
