@@ -1,5 +1,5 @@
 import numpy as np
-from randomplayer.board import Board
+from negamax.board import Board
 import copy
 import math
 
