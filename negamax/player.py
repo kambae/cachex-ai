@@ -95,7 +95,7 @@ class Player:
             return neighbours
 
         def get_edge_weight(a, b):
-            if a == (-1, -1) or b == (n, n) or board[b] == player:
+            if b == (n, n) or board[b] == player:
                 return 0
             return 1
 
@@ -120,7 +120,7 @@ class Player:
                     pq.update(neighbour, tentative_dist + path_heuristic(neighbour))
                     prev[neighbour] = curr
                     dist[neighbour] = tentative_dist
-        return None
+        return math.inf
 
     
     def turn(self, player, action):
