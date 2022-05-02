@@ -1,3 +1,6 @@
+import numpy as np
+from randomplayer.board import Board
+import random
 
 class Player:
     def __init__(self, player, n):
@@ -9,14 +12,20 @@ class Player:
         play as Red, or the string "blue" if your player will play
         as Blue.
         """
-        # put your code here
+        self.board = Board(n)
 
     def action(self):
         """
         Called at the beginning of your turn. Based on the current state
         of the game, select an action to play.
         """
-        # put your code here
+
+        board_values = [(i // self.board.n, i % self.board.n) for i in range(0, np.square(self.board.n))]
+        valid_moves = [i for i in board_values if not self.board.is_occupied(i)]
+
+        chosen = random.choice(board_values)
+        return ("PLACE", *chosen)
+
     
     def turn(self, player, action):
         """
@@ -29,5 +38,14 @@ class Player:
         the same as what your player returned from the action method
         above. However, the referee has validated it at this point.
         """
-        # put your code here
 
+        atype, *aargs = action
+
+        if atype == "STEAL":
+            # Apply STEAL action
+            self.board.swap()
+
+        elif atype == "PLACE":
+            # Apply PLACE action
+            coord = tuple(aargs)
+            self.board.place(player, coord)
