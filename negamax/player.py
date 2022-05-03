@@ -65,6 +65,8 @@ class Player:
     def get_legal_moves(self, board, player):
         board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
         action_set = [i for i in board_values if not board.is_occupied(i)]
+        # todo: keep random or no?
+        random.shuffle(action_set)
         next_states = [copy.deepcopy(board) for i in action_set]
         for i in range(0, len(action_set)):
             next_states[i].place(player, action_set[i])
