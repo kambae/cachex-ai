@@ -4,19 +4,23 @@ import copy
 import math
 
 class Player:
-    depth = 3
+    depth = 2
+    COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
         self.board = Board(n)
         self.player = player
+
+        self.enemy = [i for i in self.COLOURS if not i == self.player][0]
 
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
     #
     # note that placements to win is given by a graph search from start to end,
     # with your tokens as 0 edge and theirs as obstacles
+    # todo: code for swap?
     def action(self):
-        actions, next_states = self.get_legal_moves(self.board)
+        actions, next_states = self.get_legal_moves(self.board, self.player)
         # todo sort actions, next_states
 
         best_value = -math.inf
@@ -44,7 +48,7 @@ class Player:
         if depth == 0:
             return player_num * self.evaluate(board)
 
-        next_states = self.get_legal_moves(board)[1]
+        next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy)[1]
         # todo: sort states
 
         value = -math.inf
@@ -56,28 +60,25 @@ class Player:
                 break
         return value
 
-    def get_legal_moves(self, board):
+    def get_legal_moves(self, board, player):
         board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
         action_set = [i for i in board_values if not board.is_occupied(i)]
         next_states = [copy.deepcopy(board) for i in action_set]
         for i in range(0, len(action_set)):
-            next_states[i].place(self.player, action_set[i])
+            next_states[i].place(player, action_set[i])
         # map(lambda i: next_states[i].place(self.player, action_set[i]), range(0, len(action_set)))
 
         return action_set, next_states
 
     # todo: this bit is kinda shit, refactor if necessary
     def check_winner(self, board):
-        if self.get_player_min_placements(board, "red") == 0:
-            return "red"
-        elif self.get_player_min_placements(board, "blue") == 0:
-            return "blue"
+        for player in self.COLOURS:
+            if self.get_player_min_placements(board, player) == 0:
+                return player
         return None
 
-    # todo: this bit is kinda shit, refactor if necessary
     def evaluate(self, board):
-        enemy = "blue" if self.player == "red" else "red"
-        return self.get_player_min_placements(board, enemy) - self.get_player_min_placements(board, self.player)
+        return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
     # apply dijkstra
     # todo: this bit is kinda shit, refactor if necessary, may need to memoise
