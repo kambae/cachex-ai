@@ -2,9 +2,10 @@ import numpy as np
 from negamax.board import Board
 import copy
 import math
+import functools
 
 class Player:
-    depth = 2
+    depth = 3
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
@@ -70,7 +71,6 @@ class Player:
 
         return action_set, next_states
 
-    # todo: this bit is kinda shit, refactor if necessary
     def check_winner(self, board):
         for player in self.COLOURS:
             if self.get_player_min_placements(board, player) == 0:
@@ -81,7 +81,8 @@ class Player:
         return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
     # apply dijkstra
-    # todo: this bit is kinda shit, refactor if necessary, may need to memoise
+    # todo: this bit is kinda shit, refactor if necessary
+    @functools.lru_cache(maxsize=None)
     def get_player_min_placements(self, board, player):
         def path_heuristic(a):
             return 0

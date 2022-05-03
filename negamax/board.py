@@ -14,6 +14,7 @@ representing the state of a game, with respect to your chosen strategy.
 
 from queue import Queue
 from numpy import zeros, array, roll, vectorize
+import functools
 
 # Utility function to add two coord tuples
 _ADD = lambda a, b: (a[0] + b[0], a[1] + b[1])
@@ -112,6 +113,7 @@ class Board:
 
         return list(reachable)
 
+    @functools.lru_cache(maxsize=None)
     def inside_bounds(self, coord):
         """
         True iff coord inside board bounds.
@@ -151,6 +153,7 @@ class Board:
 
         return list(captured)
 
+    @functools.lru_cache(maxsize=None)
     def _coord_neighbours(self, coord):
         """
         Returns (within-bounds) neighbouring coordinates for given coord.
