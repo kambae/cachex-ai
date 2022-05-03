@@ -3,9 +3,10 @@ from negamax.board import Board
 import copy
 import math
 import functools
+import random
 
 class Player:
-    depth = 3
+    depth = 2
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
@@ -27,7 +28,7 @@ class Player:
         best_value = -math.inf
         alpha = -math.inf
         beta = math.inf
-        action = None
+        action = random.choice(actions)
 
         for i in range(0, len(actions)):
             negamax = -self.negamax(next_states[i], self.depth - 1, -beta, -alpha, -1)
@@ -91,7 +92,8 @@ class Player:
             if a == (-1, -1):
                 return [(0, i) for i in range(0, n) if is_valid_neighbour((0, i))] if player == "red" else [(i, 0) for i in range(0, n) if is_valid_neighbour((i, 0))]
 
-            neighbours = [i for i in board._coord_neighbours(a) if is_valid_neighbour(i)]
+            # we take this from class board as _coord_neighbours is essentially static and now it gets memoised
+            neighbours = [i for i in self.board._coord_neighbours(a) if is_valid_neighbour(i)]
 
             if (player == "red" and a[0] == n - 1) or (player == "blue" and a[1] == n - 1):
                 neighbours.append((n, n))
