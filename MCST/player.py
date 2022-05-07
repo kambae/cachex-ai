@@ -20,7 +20,7 @@ class Player:
     START_HEX = (-2, -2)
     END_HEX = (-1, -1)
 
-    playout_num = 1000
+    playout_num = 100
 
     def __init__(self, player, n):
         self.board = Board(n)
@@ -63,7 +63,7 @@ class Player:
         hex_parents[self.START_HEX] = self.START_HEX
         hex_parents[self.END_HEX] = self.END_HEX
 
-        hex_groups = DisjointSet(self.board_values.extend([self.START_HEX, self.END_HEX]), hex_parents)
+        hex_groups = DisjointSet(self.board_values + [self.START_HEX, self.END_HEX], hex_parents)
 
         for coord in your_hexes:
             for neigh in board._coord_neighbours(coord):
