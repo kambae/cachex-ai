@@ -20,7 +20,7 @@ class Player:
     START_HEX = (-2, -2)
     END_HEX = (-1, -1)
 
-    playout_num = 100
+    playout_num = 1000
 
     def __init__(self, player, n):
         self.board = Board(n)

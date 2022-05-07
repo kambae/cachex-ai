@@ -156,7 +156,11 @@ class Board:
 
         capture_neighbourhood = _get_capture_neighbourhood(coord)
         if capture_neighbourhood in capture_map[opp_type]:
-            return [_ADD(coord, s) for s in capture_map[opp_type][capture_neighbourhood]]
+            captures = [_ADD(coord, s) for s in capture_map[opp_type][capture_neighbourhood]]
+            # Remove any captured tokens
+            for coord in captures:
+                self[coord] = None
+            return captures
 
         mid_type = _SWAP_PLAYER[opp_type]
         captured = set()
