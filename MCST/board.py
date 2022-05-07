@@ -18,6 +18,7 @@ import functools
 
 # Utility function to add two coord tuples
 _ADD = lambda a, b: (a[0] + b[0], a[1] + b[1])
+_SUBTRACT = lambda a, b: (a[0] - b[0], a[1] - b[1])
 
 # Neighbour hex steps in clockwise order
 _HEX_STEPS = array([(1, -1), (1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1)], 
@@ -155,7 +156,7 @@ class Board:
 
         capture_neighbourhood = _get_capture_neighbourhood(coord)
         if capture_neighbourhood in capture_map[opp_type]:
-            return capture_map[opp_type][capture_neighbourhood]
+            return [_ADD(coord, s) for s in capture_map[opp_type][capture_neighbourhood]]
 
         mid_type = _SWAP_PLAYER[opp_type]
         captured = set()
@@ -171,7 +172,7 @@ class Board:
                     # Both mid cell tokens should be captured
                     captured.update(coords[1:])
 
-        capture_map[opp_type][capture_neighbourhood] = list(captured)
+        capture_map[opp_type][capture_neighbourhood] = [_SUBTRACT(s, coord) for s in list(captured)]
 
         # Remove any captured tokens
         for coord in captured:

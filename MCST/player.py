@@ -5,12 +5,22 @@ import math
 import functools
 import random
 
+
+def print_board(board):
+    class GameBoard:
+        def __init__(self):
+            self.board = board
+    from referee.game import _RENDER
+    from referee.log import comment
+    gameboard = GameBoard()
+    comment(_RENDER(game=gameboard))
+
 class Player:
     COLOURS = ["red", "blue"]
-    START_HEX = (0, 0)
+    START_HEX = (-2, -2)
     END_HEX = (-1, -1)
 
-    playout_num = 10000
+    playout_num = 1000
 
     def __init__(self, player, n):
         self.board = Board(n)
@@ -34,27 +44,31 @@ class Player:
             if self.playout(copy.deepcopy(self.board), selected_action, 1) == 1:
                 wins[selected_action] += 1
             games[selected_action] += 1
+            # print("-----------------------------")
 
         win_prob = {k: wins[k]/games[k] for k in games.keys() & wins if games[k] > 0}
         action = max(win_prob, key=win_prob.get) if len(win_prob.keys()) > 0 else self.select_move(self.board)
 
+        # print(win_prob)
+        # print(games)
+        # print(wins)
         return ("PLACE", *action)
 
     def calculate_hex_groups(self, board, player):
-        hex_groups = {}
+        is_start_hex = lambda coord: (coord[0] == 0 and player == "red") or (coord[1] == 0 and player == "blue")
+        is_end_hex = lambda coord: (coord[0] == (self.board.n - 1) and player == "red") or (coord[1] == (self.board.n - 1) and player == "blue")
 
         your_hexes = [i for i in self.board_values if board[i] == player]
+        hex_parents = {k: self.START_HEX if is_start_hex(k) else self.END_HEX if is_end_hex(k) else k for k in self.board_values}
+        hex_parents[self.START_HEX] = self.START_HEX
+        hex_parents[self.END_HEX] = self.END_HEX
 
-        for coord in self.board_values:
-            is_start_hex = (coord[0] == 0 and player == "red") or (coord[1] == 0 and player == "blue")
-            is_end_hex = (coord[0] == (self.board.n - 1) and player == "red") or (coord[1] == (self.board.n - 1) and player == "blue")
-            hex_groups[coord] = {coord} | ({self.START_HEX} if is_start_hex else set()) | ({self.END_HEX} if is_end_hex else set())
+        hex_groups = DisjointSet(self.board_values.extend([self.START_HEX, self.END_HEX]), hex_parents)
 
         for coord in your_hexes:
             for neigh in board._coord_neighbours(coord):
-                group = hex_groups[coord] | hex_groups[neigh]
-                hex_groups[neigh] = group
-                hex_groups[coord] = group
+                if board[neigh] == player:
+                    hex_groups.union(coord, neigh)
 
         return hex_groups
 
@@ -70,13 +84,13 @@ class Player:
         else:
             cur_groups = player_groups if turn == 1 else enemy_groups
             for neigh in board._coord_neighbours(action):
-                group = cur_groups[action] | cur_groups[neigh]
-                cur_groups[neigh] = group
-                cur_groups[action] = group
+                if board[neigh] == (self.player if turn == 1 else self.enemy):
+                    cur_groups.union(neigh, action)
 
-        if action in player_groups and self.END_HEX in player_groups[action] and self.START_HEX in player_groups[action]:
+        # print_board(board)
+        if player_groups.find(self.END_HEX) == player_groups.find(self.START_HEX):
             return 1
-        elif action in enemy_groups and self.END_HEX in enemy_groups[action] and self.START_HEX in enemy_groups[action]:
+        elif enemy_groups.find(self.END_HEX) == enemy_groups.find(self.START_HEX):
             return -1
 
         return self.playout(board, self.select_move(board), -turn, player_groups, enemy_groups)
@@ -96,3 +110,35 @@ class Player:
             # Apply PLACE action
             coord = tuple(aargs)
             self.board.place(player, coord)
+
+
+class DisjointSet():
+    def __init__(self, vertices=None, parent=None):
+        self.vertices = vertices if vertices is not None else []
+        self.parent = parent if parent is not None else {k: k for k in self.vertices}
+
+    def __str__(self):
+        return str(self.parent)
+
+    def find(self, item):
+        root = item
+        while self.parent[root] != root:
+            root = self.parent[root]
+
+        while self.parent[item] != root:
+            parent = self.parent[item]
+            self.parent[item] = root
+            item = parent
+
+        return root
+
+    def add(self, item, parent=None):
+        if parent is None:
+            parent = item
+        self.vertices.append(item)
+        self.parent[item] = parent
+
+    def union(self, set1, set2):
+        root1 = self.find(set1)
+        root2 = self.find(set2)
+        self.parent[root1] = root2
