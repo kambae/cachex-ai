@@ -15,6 +15,7 @@ class Player:
     def __init__(self, player, n):
         self.board = Board(n)
         self.player = player
+        self.board_values = [(i // n, i % n) for i in range(0, np.square(n))]
 
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
 
@@ -42,10 +43,9 @@ class Player:
     def calculate_hex_groups(self, board, player):
         hex_groups = {}
 
-        board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
-        your_hexes = [i for i in board_values if board[i] == player]
+        your_hexes = [i for i in self.board_values if board[i] == player]
 
-        for coord in board_values:
+        for coord in self.board_values:
             is_start_hex = (coord[0] == 0 and player == "red") or (coord[1] == 0 and player == "blue")
             is_end_hex = (coord[0] == (self.board.n - 1) and player == "red") or (coord[1] == (self.board.n - 1) and player == "blue")
             hex_groups[coord] = {coord} | ({self.START_HEX} if is_start_hex else set()) | ({self.END_HEX} if is_end_hex else set())
@@ -82,8 +82,7 @@ class Player:
         return self.playout(board, self.select_move(board), -turn, player_groups, enemy_groups)
 
     def select_move(self, board):
-        board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
-        action_set = [i for i in board_values if not board.is_occupied(i)]
+        action_set = [i for i in self.board_values if not board.is_occupied(i)]
         return random.choice(action_set)
     
     def turn(self, player, action):

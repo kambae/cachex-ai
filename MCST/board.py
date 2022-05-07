@@ -13,7 +13,7 @@ representing the state of a game, with respect to your chosen strategy.
 """
 
 from queue import Queue
-from numpy import zeros, array, roll, vectorize
+from numpy import zeros, array, roll, vectorize, append
 import functools
 
 # Utility function to add two coord tuples
@@ -39,12 +39,21 @@ _CAPTURE_PATTERNS = [[_ADD(n1, n2), n1, n2]
         list(zip(_HEX_STEPS, roll(_HEX_STEPS, 1))) + 
         list(zip(_HEX_STEPS, roll(_HEX_STEPS, 2)))]
 
+_CAPTURE_NEIGHBOURHOOD = append(_HEX_STEPS, array([(2, -1), (1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2)], dtype="i,i"))
+
 # Maps between player string and internal token type
 _TOKEN_MAP_OUT = { 0: None, 1: "red", 2: "blue" }
 _TOKEN_MAP_IN = {v: k for k, v in _TOKEN_MAP_OUT.items()}
 
 # Map between player token types
 _SWAP_PLAYER = { 0: 0, 1: 2, 2: 1 }
+
+# memoise captures
+capture_map = {}
+for k in _TOKEN_MAP_OUT.keys():
+    capture_map[k] = {}
+
+capture_neighbourhood_square_map = {}
 
 class Board:
     def __init__(self, n):
@@ -132,7 +141,22 @@ class Board:
         Check coord for diamond captures, and apply these to the board
         if they exist. Returns a list of captured token coordinates.
         """
+
+        def _get_capture_neighbourhood(placed_coord):
+            if placed_coord in capture_neighbourhood_square_map:
+                neighbourhood = capture_neighbourhood_square_map[placed_coord]
+            else:
+                neighbourhood = [_ADD(placed_coord, s) for s in _CAPTURE_NEIGHBOURHOOD]
+                capture_neighbourhood_square_map[placed_coord] = neighbourhood
+
+            return tuple([-1 if not self.inside_bounds(i) else self._data[i] for i in neighbourhood])
+
         opp_type = self._data[coord]
+
+        capture_neighbourhood = _get_capture_neighbourhood(coord)
+        if capture_neighbourhood in capture_map[opp_type]:
+            return capture_map[opp_type][capture_neighbourhood]
+
         mid_type = _SWAP_PLAYER[opp_type]
         captured = set()
 
@@ -146,6 +170,8 @@ class Board:
                     # Capturing has to be deferred in case of overlaps
                     # Both mid cell tokens should be captured
                     captured.update(coords[1:])
+
+        capture_map[opp_type][capture_neighbourhood] = list(captured)
 
         # Remove any captured tokens
         for coord in captured:
