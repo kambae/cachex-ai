@@ -144,7 +144,9 @@ class Player:
         digest = board.digest()
         action_set = list(board.unoccupied)
 
-        action = max(action_set, key=lambda x: self.get_uct_value(digest, x, wins_dict, plays_dict, n))
+        ucts = {x: self.get_uct_value(digest, x, wins_dict, plays_dict, n) for x in action_set}
+        max_uct = max(ucts.values())
+        return random.choice([k for k in ucts if ucts[k] == max_uct])
 
         # if board.digest() == self.board.digest():
         #     print([self.get_uct_value(digest, i, wins_dict, plays_dict, n) for i in action_set])
