@@ -20,7 +20,7 @@ class Player:
     START_HEX = (-2, -2)
     END_HEX = (-1, -1)
 
-    playout_num = 1000
+    playout_num = 2000
 
     def __init__(self, player, n):
         self.board = Board(n)
@@ -72,20 +72,40 @@ class Player:
 
         return hex_groups
 
+    def recalculate_hex_groups(self, board, hex_groups, recalculate_vertices, player):
+        is_start_hex = lambda coord: (coord[0] == 0 and player == "red") or (coord[1] == 0 and player == "blue")
+        is_end_hex = lambda coord: (coord[0] == (self.board.n - 1) and player == "red") or (coord[1] == (self.board.n - 1) and player == "blue")
+
+        for vertex in recalculate_vertices:
+            hex_groups.parent[vertex] = self.START_HEX if is_start_hex(vertex) else self.END_HEX if is_end_hex(vertex) else vertex
+
+        for coord in recalculate_vertices:
+            for neigh in board._coord_neighbours(coord):
+                if board[neigh] == player:
+                    hex_groups.union(coord, neigh)
+
+        return hex_groups
+
+
     def playout(self, board, action, turn, hex_groups=None, enemy_hex_groups=None):
+        player = self.player if turn == 1 else self.enemy
+        not_player = self.enemy if turn == 1 else self.player
+
         player_groups = self.calculate_hex_groups(board, self.player) if hex_groups is None else hex_groups
         enemy_groups = self.calculate_hex_groups(board, self.enemy) if enemy_hex_groups is None else enemy_hex_groups
+        cur_groups = player_groups if turn == 1 else enemy_groups
+        other_group = enemy_groups if turn == 1 else player_groups
 
-        captured = board.place(self.player if turn == 1 else self.enemy, action)
+        captured = board.place(player, action)
 
         if len(captured) > 0:
-            player_groups = self.calculate_hex_groups(board, self.player)
-            enemy_groups = self.calculate_hex_groups(board, self.enemy)
-        else:
-            cur_groups = player_groups if turn == 1 else enemy_groups
-            for neigh in board._coord_neighbours(action):
-                if board[neigh] == (self.player if turn == 1 else self.enemy):
-                    cur_groups.union(neigh, action)
+            roots = set([other_group.find(i) for i in captured])
+            to_recalculate = [i for i in self.board_values if other_group.find(i) in roots]
+            self.recalculate_hex_groups(board, other_group, to_recalculate, not_player)
+
+        for neigh in board._coord_neighbours(action):
+            if board[neigh] == player:
+                cur_groups.union(neigh, action)
 
         # print_board(board)
         if player_groups.find(self.END_HEX) == player_groups.find(self.START_HEX):
