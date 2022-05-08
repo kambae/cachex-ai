@@ -6,12 +6,13 @@ import functools
 import random
 
 class Player:
-    depth = 2
+    depth = 3
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
         self.board = Board(n)
         self.player = player
+        self.n = n
 
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
 
@@ -83,12 +84,14 @@ class Player:
     def evaluate(self, board):
         return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
-    # apply dijkstra
+    # apply A*
     # todo: this bit is kinda shit, refactor if necessary
     @functools.lru_cache(maxsize=None)
     def get_player_min_placements(self, board, player):
+        hexes = (len(board.red_hexes) if player == "red" else len(board.blue_hexes))
+
         def path_heuristic(a):
-            return 0
+            return max(0, n - 1 - (a[0] if player == "red" else a[1]) - hexes)
 
         def get_neighbours(a):
             if a == (-1, -1):
@@ -114,7 +117,6 @@ class Player:
         start = (-1, -1)
         goal = (n, n)
 
-        prev = {start: None}
         dist = {start: 0}
         pq = PriorityQueue()
         pq.insert(start, path_heuristic(start))
@@ -126,7 +128,6 @@ class Player:
                 tentative_dist = dist[curr] + get_edge_weight(curr, neighbour)
                 if neighbour not in dist or tentative_dist < dist[neighbour]:
                     pq.update(neighbour, tentative_dist + path_heuristic(neighbour))
-                    prev[neighbour] = curr
                     dist[neighbour] = tentative_dist
         return math.inf
 
