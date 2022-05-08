@@ -6,14 +6,14 @@ import functools
 import random
 
 class Player:
-    depth = 3
+    depth = 2
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
         self.board = Board(n)
         self.player = player
+
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
-        self.board_values = [(i // n, i % n) for i in range(0, np.square(n))]
 
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
@@ -63,8 +63,8 @@ class Player:
         return value
 
     def get_legal_moves(self, board, player):
-
-        action_set = [i for i in self.board_values if not board.is_occupied(i)]
+        board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
+        action_set = [i for i in board_values if not board.is_occupied(i)]
         # todo: keep random or no?
         random.shuffle(action_set)
         next_states = [copy.deepcopy(board) for i in action_set]
@@ -87,6 +87,9 @@ class Player:
     # todo: this bit is kinda shit, refactor if necessary
     @functools.lru_cache(maxsize=None)
     def get_player_min_placements(self, board, player):
+        def path_heuristic(a):
+            return 0
+
         def get_neighbours(a):
             if a == (-1, -1):
                 return [(0, i) for i in range(0, n) if is_valid_neighbour((0, i))] if player == "red" else [(i, 0) for i in range(0, n) if is_valid_neighbour((i, 0))]
@@ -111,23 +114,20 @@ class Player:
         start = (-1, -1)
         goal = (n, n)
 
-        # prev = {start: None}
+        prev = {start: None}
         dist = {start: 0}
         pq = PriorityQueue()
-        pq.insert(start, 0)
-
+        pq.insert(start, path_heuristic(start))
         while not pq.is_empty():
             curr = pq.pop()
             if curr == goal:
                 return dist[goal]
             for neighbour in get_neighbours(curr):
-                alt = dist[curr] + get_edge_weight(curr, neighbour)
-                if neighbour not in dist:
-                    dist[neighbour] = math.inf
-                if alt < dist[neighbour]:
-                    dist[neighbour] = alt
-                    pq.update(neighbour, alt)
-
+                tentative_dist = dist[curr] + get_edge_weight(curr, neighbour)
+                if neighbour not in dist or tentative_dist < dist[neighbour]:
+                    pq.update(neighbour, tentative_dist + path_heuristic(neighbour))
+                    prev[neighbour] = curr
+                    dist[neighbour] = tentative_dist
         return math.inf
 
     
