@@ -21,6 +21,7 @@ class Player:
     END_HEX = (-1, -1)
 
     playout_num = 2000
+    c = np.sqrt(2)
 
     def __init__(self, player, n):
         self.board = Board(n)
@@ -33,8 +34,11 @@ class Player:
         wins = {}
         games = {}
 
+        wins_dict = {}
+        plays_dict = {}
+
         for i in range(0, self.playout_num):
-            selected_action = self.select_move(self.board)
+            selected_action = self.select_move(self.board, wins_dict, plays_dict, i)
 
             # todo: find out why np error is occuring without this line
             selected_action = tuple([int(i) for i in selected_action])
@@ -44,7 +48,9 @@ class Player:
             if selected_action not in games:
                 games[selected_action] = 0
 
-            if self.playout(copy.deepcopy(self.board), selected_action, 1) == 1:
+            result = self.playout(copy.deepcopy(self.board), selected_action, 1, wins_dict, plays_dict, i)
+            self.update_digest_dict(self.board.digest(), selected_action, wins_dict, plays_dict, result)
+            if result == 1:
                 wins[selected_action] += 1
             games[selected_action] += 1
             # print("-----------------------------")
@@ -89,8 +95,7 @@ class Player:
 
         return hex_groups
 
-
-    def playout(self, board, action, turn, hex_groups=None, enemy_hex_groups=None):
+    def playout(self, board, action, turn, wins_dict, plays_dict, n, hex_groups=None, enemy_hex_groups=None):
         player = self.player if turn == 1 else self.enemy
         not_player = self.enemy if turn == 1 else self.player
 
@@ -116,11 +121,42 @@ class Player:
         elif enemy_groups.find(self.END_HEX) == enemy_groups.find(self.START_HEX):
             return -1
 
-        return self.playout(board, self.select_move(board), -turn, player_groups, enemy_groups)
+        result = self.playout(board, self.select_move(board, wins_dict, plays_dict, n), -turn, wins_dict, plays_dict, n, player_groups, enemy_groups)
+        self.update_digest_dict(board.digest(), action, wins_dict, plays_dict, result)
+        return result
 
-    def select_move(self, board):
+    def update_digest_dict(self, digest, action, wins_dict, plays_dict, result):
+        if digest not in wins_dict:
+            wins_dict[digest] = {}
+        if digest not in plays_dict:
+            plays_dict[digest] = {}
+        if action not in plays_dict[digest]:
+            plays_dict[digest][action] = 0
+        if action not in wins_dict[digest]:
+            wins_dict[digest][action] = 0
+
+        plays_dict[digest][action] += 1
+        if result == 1:
+            wins_dict[digest][action] += 1
+
+
+    def select_move(self, board, wins_dict, plays_dict, n):
+        digest = board.digest()
         action_set = list(board.unoccupied)
-        return random.choice(action_set)
+
+        action = max(action_set, key=lambda x: self.get_uct_value(digest, x, wins_dict, plays_dict, n))
+
+        # if board.digest() == self.board.digest():
+        #     print([self.get_uct_value(digest, i, wins_dict, plays_dict, n) for i in action_set])
+
+        return action
+
+    def get_uct_value(self, digest, action, wins_dict, plays_dict, n):
+        if digest in plays_dict and action in plays_dict[digest]:
+            ni = plays_dict[digest][action]
+            wi = wins_dict[digest][action]
+            return (wi/ni) + (self.c * np.sqrt(np.log(n)/ni))
+        return math.inf
     
     def turn(self, player, action):
         atype, *aargs = action
