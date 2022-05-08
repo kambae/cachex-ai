@@ -36,6 +36,9 @@ class Player:
         for i in range(0, self.playout_num):
             selected_action = self.select_move(self.board)
 
+            # todo: find out why np error is occuring without this line
+            selected_action = tuple([int(i) for i in selected_action])
+
             if selected_action not in wins:
                 wins[selected_action] = 0
             if selected_action not in games:
@@ -116,7 +119,7 @@ class Player:
         return self.playout(board, self.select_move(board), -turn, player_groups, enemy_groups)
 
     def select_move(self, board):
-        action_set = [i for i in self.board_values if not board.is_occupied(i)]
+        action_set = list(board.unoccupied)
         return random.choice(action_set)
     
     def turn(self, player, action):
