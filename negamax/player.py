@@ -41,6 +41,8 @@ class Player:
                 action = actions[i]
             alpha = max(alpha, best_value)
 
+            action = tuple([int(i) for i in action])
+
         return ("PLACE", *action)
 
     # player_num = 1 for player and player_num = -1 for opponent
@@ -107,11 +109,14 @@ class Player:
 
             return neighbours
 
-        def get_edge_weight(a, b):
+        @functools.lru_cache(maxsize=None)
+        # edge weight only dependant on target hex here - now we can cache!
+        def get_edge_weight(b):
             if b == self.END_HEX or board[b] == player:
                 return 0
             return 1
 
+        @functools.lru_cache(maxsize=None)
         def is_valid_neighbour(a):
             return board[a] == player or board[a] is None
 
@@ -127,7 +132,7 @@ class Player:
             if curr == goal:
                 return dist[goal]
             for neighbour in get_neighbours(curr):
-                tentative_dist = dist[curr] + get_edge_weight(curr, neighbour)
+                tentative_dist = dist[curr] + get_edge_weight(neighbour)
                 if neighbour not in dist or tentative_dist < dist[neighbour]:
                     pq.update(neighbour, tentative_dist + path_heuristic(neighbour))
                     dist[neighbour] = tentative_dist
