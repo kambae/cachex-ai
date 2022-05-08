@@ -16,6 +16,9 @@ class Player:
 
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
 
+        self.START_HEX = (-1, -1)
+        self.END_HEX = (n, n)
+
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
     #
@@ -94,19 +97,19 @@ class Player:
             return max(0, n - 1 - (a[0] if player == "red" else a[1]) - hexes)
 
         def get_neighbours(a):
-            if a == (-1, -1):
+            if a == self.START_HEX:
                 return [(0, i) for i in range(0, n) if is_valid_neighbour((0, i))] if player == "red" else [(i, 0) for i in range(0, n) if is_valid_neighbour((i, 0))]
 
             # we take this from class board as _coord_neighbours is essentially static and now it gets memoised
             neighbours = [i for i in self.board._coord_neighbours(a) if is_valid_neighbour(i)]
 
             if (player == "red" and a[0] == n - 1) or (player == "blue" and a[1] == n - 1):
-                neighbours.append((n, n))
+                neighbours.append(self.END_HEX)
 
             return neighbours
 
         def get_edge_weight(a, b):
-            if b == (n, n) or board[b] == player:
+            if b == self.END_HEX or board[b] == player:
                 return 0
             return 1
 
@@ -114,8 +117,8 @@ class Player:
             return board[a] == player or board[a] is None
 
         n = board.n
-        start = (-1, -1)
-        goal = (n, n)
+        start = self.START_HEX
+        goal = self.END_HEX
 
         dist = {start: 0}
         pq = PriorityQueue()
