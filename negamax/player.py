@@ -67,11 +67,10 @@ class Player:
         return value
 
     def get_legal_moves(self, board, player):
-        board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
-        action_set = [i for i in board_values if not board.is_occupied(i)]
+        action_set = list(board.unoccupied)
         # todo: keep random or no?
         random.shuffle(action_set)
-        next_states = [copy.deepcopy(board) for i in action_set]
+        next_states = [self.copy_board(board) for i in action_set]
         for i in range(0, len(action_set)):
             next_states[i].place(player, action_set[i])
         # map(lambda i: next_states[i].place(self.player, action_set[i]), range(0, len(action_set)))
@@ -146,6 +145,15 @@ class Player:
             # Apply PLACE action
             coord = tuple(aargs)
             self.board.place(player, coord)
+
+    def copy_board(self, board):
+        ret = Board(board.n)
+        ret._data = board._data.copy()
+        ret.blue_hexes = board.blue_hexes.copy()
+        ret.red_hexes = board.red_hexes.copy()
+        ret.unoccupied = board.unoccupied.copy()
+
+        return ret
 
 # todo make prio queue efficient?
 class PriorityQueue:
