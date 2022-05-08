@@ -55,6 +55,7 @@ for k in _TOKEN_MAP_OUT.keys():
     capture_map[k] = {}
 
 capture_neighbourhood_square_map = {}
+coord_neighbour_map = {}
 
 class Board:
     def __init__(self, n):
@@ -184,10 +185,15 @@ class Board:
 
         return list(captured)
 
-    @functools.lru_cache(maxsize=None)
     def _coord_neighbours(self, coord):
         """
         Returns (within-bounds) neighbouring coordinates for given coord.
         """
-        return [_ADD(coord, step) for step in _HEX_STEPS \
+
+        if coord in coord_neighbour_map:
+            return coord_neighbour_map[coord]
+
+        neighbours = [_ADD(coord, step) for step in _HEX_STEPS \
             if self.inside_bounds(_ADD(coord, step))]
+        coord_neighbour_map[coord] = neighbours
+        return neighbours
