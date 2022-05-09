@@ -6,7 +6,7 @@ import functools
 import random
 
 class Player:
-    depth = 2
+    depth = 3
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
