@@ -47,6 +47,8 @@ _TOKEN_MAP_IN = {v: k for k, v in _TOKEN_MAP_OUT.items()}
 # Map between player token types
 _SWAP_PLAYER = { 0: 0, 1: 2, 2: 1 }
 
+neighbours_map = {}
+
 class Board:
     def __init__(self, n):
         """
@@ -59,6 +61,9 @@ class Board:
         self.red_hexes = set()
         self.blue_hexes = set()
         self.unoccupied = set(self.board_values)
+
+        if n not in neighbours_map:
+            neighbours_map[n] = {}
 
     def __getitem__(self, coord):
         """
@@ -139,7 +144,6 @@ class Board:
 
         return list(reachable)
 
-    @functools.lru_cache(maxsize=None)
     def inside_bounds(self, coord):
         """
         True iff coord inside board bounds.
@@ -179,10 +183,13 @@ class Board:
 
         return list(captured)
 
-    @functools.lru_cache(maxsize=None)
     def _coord_neighbours(self, coord):
         """
         Returns (within-bounds) neighbouring coordinates for given coord.
         """
-        return [_ADD(coord, step) for step in _HEX_STEPS \
+        if coord in neighbours_map[self.n]:
+            return neighbours_map[self.n][coord]
+        neighbours = [_ADD(coord, step) for step in _HEX_STEPS \
             if self.inside_bounds(_ADD(coord, step))]
+        neighbours_map[self.n][coord] = neighbours
+        return neighbours

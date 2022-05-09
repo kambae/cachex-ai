@@ -96,7 +96,7 @@ class Player:
         return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
     # apply A*
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache(maxsize=128)
     def get_player_min_placements(self, board, player):
         hexes = (len(board.red_hexes) if player == "red" else len(board.blue_hexes))
 
