@@ -29,6 +29,9 @@ class Player:
     # with your tokens as 0 edge and theirs as obstacles
     # todo: code for swap?
     def action(self):
+        if self.turn_num == 2:
+            return ("STEAL", )
+        
         actions, next_states = self.get_legal_moves(self.board, self.player, True)
 
         best_value = -math.inf
@@ -44,9 +47,6 @@ class Player:
             alpha = max(alpha, best_value)
 
             action = tuple([int(i) for i in action])
-
-        if self.turn_num == 2:
-            return ("STEAL", )
 
         return ("PLACE", *action)
 
