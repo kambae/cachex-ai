@@ -6,7 +6,7 @@ import functools
 import random
 
 class Player:
-    depth = 3
+    depth = 2
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
@@ -30,7 +30,6 @@ class Player:
     # todo: code for swap?
     def action(self):
         actions, next_states = self.get_legal_moves(self.board, self.player, True)
-        # todo sort actions, next_states
 
         best_value = -math.inf
         alpha = -math.inf
@@ -64,7 +63,6 @@ class Player:
 
         sort_states = False if depth == 1 else True
         next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy, sort_states)[1]
-        # todo: sort states
 
         value = -math.inf
         for state in next_states:
