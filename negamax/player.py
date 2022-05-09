@@ -13,11 +13,14 @@ class Player:
         self.board = Board(n)
         self.player = player
         self.n = n
+        self.turn_num = 1
 
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
 
         self.START_HEX = (-1, -1)
         self.END_HEX = (n, n)
+
+        self.CENTER_TILE = ((n-1)/2, (n-1)/2) if self.n % 2 == 1 else None
 
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
@@ -42,6 +45,9 @@ class Player:
             alpha = max(alpha, best_value)
 
             action = tuple([int(i) for i in action])
+
+        if self.turn_num == 2:
+            return ("STEAL", )
 
         return ("PLACE", *action)
 
@@ -70,7 +76,7 @@ class Player:
         return value
 
     def get_legal_moves(self, board, player, sorted=False):
-        action_set = list(board.unoccupied)
+        action_set = list(board.unoccupied - {self.CENTER_TILE}) if (self.CENTER_TILE is not None and self.turn_num == 1) else list(board.unoccupied)
         # todo: keep random or no?
         random.shuffle(action_set)
         next_states = [self.copy_board(board) for i in action_set]
@@ -92,7 +98,6 @@ class Player:
         return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
     # apply A*
-    # todo: this bit is kinda shit, refactor if necessary
     @functools.lru_cache(maxsize=None)
     def get_player_min_placements(self, board, player):
         hexes = (len(board.red_hexes) if player == "red" else len(board.blue_hexes))
@@ -153,6 +158,8 @@ class Player:
             # Apply PLACE action
             coord = tuple(aargs)
             self.board.place(player, coord)
+
+        self.turn_num += 1
 
     def copy_board(self, board):
         ret = Board(board.n)
