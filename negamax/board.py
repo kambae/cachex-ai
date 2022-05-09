@@ -14,6 +14,7 @@ representing the state of a game, with respect to your chosen strategy.
 
 from queue import Queue
 from numpy import zeros, array, roll, vectorize
+import numpy as np
 import functools
 
 # Utility function to add two coord tuples
@@ -54,6 +55,11 @@ class Board:
         self.n = n
         self._data = zeros((n, n), dtype=int)
 
+        self.board_values = [(i // n, i % n) for i in range(0, np.square(n))]
+        self.red_hexes = set()
+        self.blue_hexes = set()
+        self.unoccupied = set(self.board_values)
+
     def __getitem__(self, coord):
         """
         Get the token at given board coord (r, q).
@@ -64,6 +70,17 @@ class Board:
         """
         Set the token at given board coord (r, q).
         """
+        if token is None:
+            self.red_hexes.discard(coord)
+            self.blue_hexes.discard(coord)
+            self.unoccupied.add(coord)
+        elif token == "red":
+            self.red_hexes.add(coord)
+            self.unoccupied.discard(coord)
+        elif token == "blue":
+            self.blue_hexes.add(coord)
+            self.unoccupied.discard(coord)
+
         self._data[coord] = _TOKEN_MAP_IN[token]
 
     def digest(self):
@@ -79,6 +96,15 @@ class Board:
         board axis. This is really just a "matrix transpose" op combined
         with a swap between player token types.
         """
+
+        self.unoccupied = set(self.board_values)
+
+        new_blue = set([(coord[1], coord[0]) for coord in self.red_hexes])
+        new_red = set([(coord[1], coord[0]) for coord in self.blue_hexes])
+        self.unoccupied -= new_blue | new_red
+        self.red_hexes = new_red
+        self.blue_hexes = new_blue
+
         swap_player_tokens = vectorize(lambda t: _SWAP_PLAYER[t])
         self._data = swap_player_tokens(self._data.transpose())
 

@@ -6,14 +6,21 @@ import functools
 import random
 
 class Player:
-    depth = 2
+    depth = 3
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
         self.board = Board(n)
         self.player = player
+        self.n = n
+        self.turn_num = 1
 
         self.enemy = [i for i in self.COLOURS if not i == self.player][0]
+
+        self.START_HEX = (-1, -1)
+        self.END_HEX = (n, n)
+
+        self.CENTER_TILE = ((n-1)/2, (n-1)/2) if self.n % 2 == 1 else None
 
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
@@ -22,8 +29,7 @@ class Player:
     # with your tokens as 0 edge and theirs as obstacles
     # todo: code for swap?
     def action(self):
-        actions, next_states = self.get_legal_moves(self.board, self.player)
-        # todo sort actions, next_states
+        actions, next_states = self.get_legal_moves(self.board, self.player, True)
 
         best_value = -math.inf
         alpha = -math.inf
@@ -36,6 +42,11 @@ class Player:
                 best_value = negamax
                 action = actions[i]
             alpha = max(alpha, best_value)
+
+            action = tuple([int(i) for i in action])
+
+        if self.turn_num == 2:
+            return ("STEAL", )
 
         return ("PLACE", *action)
 
@@ -50,8 +61,8 @@ class Player:
         if depth == 0:
             return player_num * self.evaluate(board)
 
-        next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy)[1]
-        # todo: sort states
+        sort_states = False if depth == 1 else True
+        next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy, sort_states)[1]
 
         value = -math.inf
         for state in next_states:
@@ -62,12 +73,13 @@ class Player:
                 break
         return value
 
-    def get_legal_moves(self, board, player):
-        board_values = [(i // board.n, i % board.n) for i in range(0, np.square(board.n))]
-        action_set = [i for i in board_values if not board.is_occupied(i)]
+    def get_legal_moves(self, board, player, sorted=False):
+        action_set = list(board.unoccupied - {self.CENTER_TILE}) if (self.CENTER_TILE is not None and self.turn_num == 1) else list(board.unoccupied)
         # todo: keep random or no?
         random.shuffle(action_set)
-        next_states = [copy.deepcopy(board) for i in action_set]
+        next_states = [self.copy_board(board) for i in action_set]
+        if sorted:
+            next_states.sort(key=lambda x: (len(x.red_hexes) - len(x.blue_hexes)) if player=="red" else len(x.blue_hexes) - len(x.red_hexes))
         for i in range(0, len(action_set)):
             next_states[i].place(player, action_set[i])
         # map(lambda i: next_states[i].place(self.player, action_set[i]), range(0, len(action_set)))
@@ -83,38 +95,41 @@ class Player:
     def evaluate(self, board):
         return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)
 
-    # apply dijkstra
-    # todo: this bit is kinda shit, refactor if necessary
+    # apply A*
     @functools.lru_cache(maxsize=None)
     def get_player_min_placements(self, board, player):
+        hexes = (len(board.red_hexes) if player == "red" else len(board.blue_hexes))
+
         def path_heuristic(a):
-            return 0
+            return max(0, n - 1 - (a[0] if player == "red" else a[1]) - hexes)
 
         def get_neighbours(a):
-            if a == (-1, -1):
+            if a == self.START_HEX:
                 return [(0, i) for i in range(0, n) if is_valid_neighbour((0, i))] if player == "red" else [(i, 0) for i in range(0, n) if is_valid_neighbour((i, 0))]
 
             # we take this from class board as _coord_neighbours is essentially static and now it gets memoised
             neighbours = [i for i in self.board._coord_neighbours(a) if is_valid_neighbour(i)]
 
             if (player == "red" and a[0] == n - 1) or (player == "blue" and a[1] == n - 1):
-                neighbours.append((n, n))
+                neighbours.append(self.END_HEX)
 
             return neighbours
 
-        def get_edge_weight(a, b):
-            if b == (n, n) or board[b] == player:
+        @functools.lru_cache(maxsize=None)
+        # edge weight only dependant on target hex here - now we can cache!
+        def get_edge_weight(b):
+            if b == self.END_HEX or board[b] == player:
                 return 0
             return 1
 
+        @functools.lru_cache(maxsize=None)
         def is_valid_neighbour(a):
             return board[a] == player or board[a] is None
 
         n = board.n
-        start = (-1, -1)
-        goal = (n, n)
+        start = self.START_HEX
+        goal = self.END_HEX
 
-        prev = {start: None}
         dist = {start: 0}
         pq = PriorityQueue()
         pq.insert(start, path_heuristic(start))
@@ -123,10 +138,9 @@ class Player:
             if curr == goal:
                 return dist[goal]
             for neighbour in get_neighbours(curr):
-                tentative_dist = dist[curr] + get_edge_weight(curr, neighbour)
+                tentative_dist = dist[curr] + get_edge_weight(neighbour)
                 if neighbour not in dist or tentative_dist < dist[neighbour]:
                     pq.update(neighbour, tentative_dist + path_heuristic(neighbour))
-                    prev[neighbour] = curr
                     dist[neighbour] = tentative_dist
         return math.inf
 
@@ -142,6 +156,17 @@ class Player:
             # Apply PLACE action
             coord = tuple(aargs)
             self.board.place(player, coord)
+
+        self.turn_num += 1
+
+    def copy_board(self, board):
+        ret = Board(board.n)
+        ret._data = board._data.copy()
+        ret.blue_hexes = board.blue_hexes.copy()
+        ret.red_hexes = board.red_hexes.copy()
+        ret.unoccupied = board.unoccupied.copy()
+
+        return ret
 
 # todo make prio queue efficient?
 class PriorityQueue:

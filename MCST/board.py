@@ -108,7 +108,15 @@ class Board:
         board axis. This is really just a "matrix transpose" op combined
         with a swap between player token types.
         """
-        # todo: update red_hexes and blue_hexes and unoccupied
+
+        self.unoccupied = set(self.board_values)
+
+        new_blue = set([(coord[1], coord[0]) for coord in self.red_hexes])
+        new_red = set([(coord[1], coord[0]) for coord in self.blue_hexes])
+        self.unoccupied -= new_blue | new_red
+        self.red_hexes = new_red
+        self.blue_hexes = new_blue
+
         swap_player_tokens = vectorize(lambda t: _SWAP_PLAYER[t])
         self._data = swap_player_tokens(self._data.transpose())
 
