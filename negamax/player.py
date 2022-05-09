@@ -26,7 +26,7 @@ class Player:
     # with your tokens as 0 edge and theirs as obstacles
     # todo: code for swap?
     def action(self):
-        actions, next_states = self.get_legal_moves(self.board, self.player)
+        actions, next_states = self.get_legal_moves(self.board, self.player, True)
         # todo sort actions, next_states
 
         best_value = -math.inf
@@ -56,7 +56,8 @@ class Player:
         if depth == 0:
             return player_num * self.evaluate(board)
 
-        next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy)[1]
+        sort_states = False if depth == 1 else True
+        next_states = self.get_legal_moves(board, self.player if player_num == 1 else self.enemy, sort_states)[1]
         # todo: sort states
 
         value = -math.inf
@@ -68,11 +69,13 @@ class Player:
                 break
         return value
 
-    def get_legal_moves(self, board, player):
+    def get_legal_moves(self, board, player, sorted=False):
         action_set = list(board.unoccupied)
         # todo: keep random or no?
         random.shuffle(action_set)
         next_states = [self.copy_board(board) for i in action_set]
+        if sorted:
+            next_states.sort(key=lambda x: (len(x.red_hexes) - len(x.blue_hexes)) if player=="red" else len(x.blue_hexes) - len(x.red_hexes))
         for i in range(0, len(action_set)):
             next_states[i].place(player, action_set[i])
         # map(lambda i: next_states[i].place(self.player, action_set[i]), range(0, len(action_set)))
