@@ -1,7 +1,7 @@
 from negamax import player
 
 class Player(player.Player):
-    depth = 3
+    depth = 2
     def evaluate(self, board):
         player_hexes = board.red_hexes if player == "red" else board.blue_hexes
         enemy_hexes = board.blue_hexes if player == "blue" else board.red_hexes
