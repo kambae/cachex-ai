@@ -5,8 +5,9 @@ import math
 import functools
 import random
 
+
 class Player:
-    depth = 3
+    depth = 2
     COLOURS = ["red", "blue"]
 
     def __init__(self, player, n):
@@ -46,7 +47,7 @@ class Player:
                 action = actions[i]
             alpha = max(alpha, best_value)
 
-            action = tuple([int(i) for i in action])
+        action = tuple([int(i) for i in action])
 
         return ("PLACE", *action)
 
@@ -67,10 +68,11 @@ class Player:
         value = -math.inf
         for state in next_states:
             value = max(value, -self.negamax(state, depth - 1, -beta, -alpha, -player_num))
-            # note this is fail-soft
-            alpha = max(alpha, value)
+            # note this is fail-HARD
             if alpha >= beta:
                 break
+            alpha = max(alpha, value)
+
         return value
 
     def get_legal_moves(self, board, player, sorted=False):
@@ -144,7 +146,6 @@ class Player:
                     dist[neighbour] = tentative_dist
         return math.inf
 
-    
     def turn(self, player, action):
         atype, *aargs = action
 
