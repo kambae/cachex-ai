@@ -6,11 +6,11 @@ import numpy as np
 
 players = {
     "greedy": ("greedy", "Player"),
-    # "AIFTB": AIFTBplayer,
-    "MCST with UCT": ("MCST", "Player"),
+    "AIFTB": ("AIFTB","Player"),
+    "MCST": ("MCST", "Player"),
     "Minimax 1": ("negamax_heuristic", "Player"),
     "Minimax 2": ("negamax_simple_heuristic", "Player"),
-    # "Random": ("randomplayer", "Player")
+    "Random": ("randomplayer", "Player")
 }
 
 size = 6

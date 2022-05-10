@@ -2,6 +2,7 @@ from AIFTB.board import Board
 import math
 import functools
 import random
+import numpy as np
 
 class Player:
     depth = 2
