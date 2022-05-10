@@ -25,9 +25,10 @@ class Player(player.Player):
         self.board_values = [(i // n, i % n) for i in range(0, np.square(n))]
 
     def evaluate(self, board):
-        player_hexes = board.red_hexes if player == "red" else board.blue_hexes
-        enemy_hexes = board.blue_hexes if player == "blue" else board.red_hexes
-        return len(player_hexes) - 10 * len(enemy_hexes)
+        player_hexes = board.red_hexes if self.player == "red" else board.blue_hexes
+        enemy_hexes = board.blue_hexes if self.enemy == "blue" else board.red_hexes
+
+        return len(player_hexes) - len(enemy_hexes)
 
     def calculate_hex_groups(self, board, player):
         is_start_hex = lambda coord: (coord[0] == 0 and player == "red") or (coord[1] == 0 and player == "blue")

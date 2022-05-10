@@ -1,4 +1,4 @@
-from negamax_heuristic import player
+from negamax_heuristic_2 import player
 
 class Player(player.Player):
     pass

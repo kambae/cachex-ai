@@ -20,7 +20,7 @@ class Player:
     START_HEX = (-2, -2)
     END_HEX = (-1, -1)
 
-    playout_num = 2000
+    playout_num = 600
     c = np.sqrt(2)
 
     def __init__(self, player, n):
