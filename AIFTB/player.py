@@ -3,10 +3,14 @@ import math
 import functools
 import random
 import numpy as np
+import time
 
 class Player:
-    depth = 2
     COLOURS = ["red", "blue"]
+    REDUCE_DEPTH_MOVE_CUTOFF = 2.5
+
+    move_times = []
+    total_time = 0
 
     def __init__(self, player, n):
         self.board = Board(n)
@@ -21,6 +25,18 @@ class Player:
 
         self.CENTER_TILE = ((n-1)/2, (n-1)/2) if self.n % 2 == 1 else None
 
+        self.max_time = n ** 2
+        if n == 3:
+            self.original_depth = 10
+        elif n == 4:
+            self.original_depth = 4
+        elif n <= 6:
+            self.original_depth = 3
+        else:
+            self.original_depth = 2
+
+        self.depth = self.original_depth
+
     # find action based on negamax with alpha-beta pruning
     # evalution function is (opponent minimum placements to win - your minimum placements to win)
     #
@@ -30,7 +46,11 @@ class Player:
     def action(self):
         if self.turn_num == 2:
             return ("STEAL", )
-        
+
+        if self.depth == self.original_depth and len(self.move_times) > 0:
+            self.determine_depth()
+
+        start_time = time.process_time()
         actions, next_states = self.get_legal_moves(self.board, self.player, True)
 
         best_value = -math.inf
@@ -47,7 +67,17 @@ class Player:
 
         action = tuple([int(i) for i in action])
 
+        time_taken = time.process_time() - start_time
+        self.move_times.append(time_taken)
+        self.total_time += time_taken
+
         return ("PLACE", *action)
+
+    # todo: revert to random if not enough time in 15x15
+    def determine_depth(self):
+        avg_time = np.mean(self.move_times)
+        if self.total_time + (self.REDUCE_DEPTH_MOVE_CUTOFF * avg_time) >= self.max_time:
+            self.depth = self.original_depth - 1
 
     # player_num = 1 for player and player_num = -1 for opponent
     def negamax(self, board, depth, alpha, beta, player_num):
