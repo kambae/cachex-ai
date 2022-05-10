@@ -17,4 +17,4 @@ class Player(player.Player):
         def get_hex_centrality(hex):
             return np.linalg.norm(np.array([hex]) - np.array([self.n / 2, self.n / 2]))
 
-        return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player)  + 1/1000 * (len(player_hexes) - len(enemy_hexes)) + 1/100000 * get_centrality_score(player_hexes)
+        return self.get_player_min_placements(board, self.enemy) - self.get_player_min_placements(board, self.player) + 1/1000 * (len(player_hexes) - len(enemy_hexes)) + 1/100000 * get_centrality_score(player_hexes)
