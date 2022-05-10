@@ -5,8 +5,8 @@ class Player(player.Player):
     depth = 2
 
     def evaluate(self, board):
-        player_hexes = board.red_hexes if player == "red" else board.blue_hexes
-        enemy_hexes = board.blue_hexes if player == "blue" else board.red_hexes
+        player_hexes = board.red_hexes if self.player == "red" else board.blue_hexes
+        enemy_hexes = board.blue_hexes if self.enemy == "blue" else board.red_hexes
 
         def get_total_tile_value(board_input, player_type, hexes):
             triples = set()
@@ -21,5 +21,5 @@ class Player(player.Player):
                             triples.add(frozenset({hex, i, coord}))
             return len(triples)
 
-        return 10/self.get_player_min_placements(board, self.player) - 10/self.get_player_min_placements(board, self.enemy) + len(player_hexes) - len(enemy_hexes)
+        return 10/self.get_player_min_placements(board, self.player) - 20/self.get_player_min_placements(board, self.enemy) + len(player_hexes) - len(enemy_hexes)
 

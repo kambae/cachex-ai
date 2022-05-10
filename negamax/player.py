@@ -68,10 +68,11 @@ class Player:
         value = -math.inf
         for state in next_states:
             value = max(value, -self.negamax(state, depth - 1, -beta, -alpha, -player_num))
-            # note this is fail-HARD
+            alpha = max(alpha, value)
+            # note this is fail-soft
             if alpha >= beta:
                 break
-            alpha = max(alpha, value)
+
 
         return value
 
@@ -168,6 +169,7 @@ class Player:
         ret.unoccupied = board.unoccupied.copy()
 
         return ret
+
 
 # todo make prio queue efficient?
 class PriorityQueue:
