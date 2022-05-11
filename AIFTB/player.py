@@ -32,8 +32,10 @@ class Player:
             self.original_depth = 4
         elif n <= 6:
             self.original_depth = 3
-        else:
+        elif n <= 13:
             self.original_depth = 2
+        else:
+            self.original_depth = 1
 
         self.depth = self.original_depth
 
@@ -47,7 +49,7 @@ class Player:
         if self.turn_num == 2:
             return ("STEAL", )
 
-        if self.depth == self.original_depth and len(self.move_times) > 0:
+        if self.depth == self.original_depth and self.original_depth != 1 and len(self.move_times) > 0:
             self.determine_depth()
 
         start_time = time.process_time()
@@ -73,7 +75,6 @@ class Player:
 
         return ("PLACE", *action)
 
-    # todo: revert to random if not enough time in 15x15
     def determine_depth(self):
         avg_time = np.mean(self.move_times)
         if self.total_time + (self.REDUCE_DEPTH_MOVE_CUTOFF * avg_time) >= self.max_time:
