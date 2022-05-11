@@ -7,7 +7,7 @@ import time
 
 class Player:
     COLOURS = ["red", "blue"]
-    REDUCE_DEPTH_MOVE_CUTOFF = 2.5
+    REDUCE_DEPTH_MOVE_CUTOFF = 3
 
     move_times = []
     total_time = 0
@@ -32,7 +32,7 @@ class Player:
             self.original_depth = 4
         elif n <= 6:
             self.original_depth = 3
-        elif n <= 13:
+        elif n <= 12:
             self.original_depth = 2
         else:
             self.original_depth = 1
